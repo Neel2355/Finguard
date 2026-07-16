@@ -75,7 +75,7 @@ New circular detected → AI reads it → Plain English summary
 ## 📁 Project Structure
 
 ```
-finguard/
+Finguard/
 ├── index.html          # Frontend — full dashboard (all pages)
 ├── server.js           # Express API server + cron scheduler
 ├── scrapers.js         # RBI, SEBI, IRDAI, FIU web scrapers
@@ -93,8 +93,8 @@ finguard/
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/YOUR_USERNAME/finguard.git
-cd finguard
+git clone https://github.com/Neel2355/Finguard.git
+cd Finguard
 ```
 
 ### 2. Install dependencies
@@ -188,8 +188,8 @@ MIT License — feel free to use, modify, and distribute.
 
 **Neel** — Final year Computer Engineering student at I²IT Pune
 
-- 🔗 [LinkedIn](https://linkedin.com/in/YOUR_PROFILE)
-- 📧 your@email.com
+
+- 📧 neelmhaske23@email.com
 - 💼 Open to internships and fresher roles in AI/Full-stack/Product
 
 ---
