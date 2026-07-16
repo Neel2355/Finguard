@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinGuard — Compliance Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#1a3a6b;--brand-light:#e8eef8;--brand-mid:#3B6FCA;
+  --accent:#e05c2e;--accent-light:#fdf0eb;
+  --success:#1a7a4a;--success-light:#e8f5ee;
+  --warn:#b85c00;--warn-light:#fff3e0;
+  --danger:#c0392b;--danger-light:#fdecea;
+  --text:#1a1a2e;--text2:#555570;--text3:#888899;
+  --border:rgba(26,58,107,0.12);--bg:#f4f6fb;--card:#ffffff;--sidebar:#1a2540;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:210px;background:var(--sidebar);display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;height:100vh;z-index:50}
+.logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.logo-name{font-size:16px;font-weight:600;color:#fff;letter-spacing:-0.3px}
+.logo-sub{font-size:10px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:1.2px;margin-top:2px}
+.nav{padding:12px 8px;flex:1;overflow-y:auto}
+.nav-section{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.25);padding:12px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;color:rgba(255,255,255,0.5);font-size:12.5px;margin-bottom:2px;transition:all 0.15s;position:relative}
+.nav-item:hover{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.85)}
+.nav-item.active{background:rgba(59,111,202,0.3);color:#fff;font-weight:500}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:var(--brand-mid);border-radius:0 3px 3px 0}
+.nav-item i{font-size:16px;width:18px;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600}
+.nb-danger{background:rgba(192,57,43,0.8);color:#fff}
+.nb-warn{background:rgba(184,92,0,0.7);color:#fff}
+.sidebar-bottom{padding:12px 8px;border-top:1px solid rgba(255,255,255,0.07)}
+.bank-badge{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,255,255,0.05);border-radius:8px}
+.bank-avatar{width:30px;height:30px;background:var(--brand-mid);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.bank-name{font-size:12px;font-weight:500;color:rgba(255,255,255,0.85)}
+.bank-role{font-size:10px;color:rgba(255,255,255,0.35)}
+.main{flex:1;margin-left:210px;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+.page-title{font-size:14px;font-weight:600;color:var(--text)}
+.page-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.15s;white-space:nowrap}
+.btn-primary{background:var(--brand-mid);color:#fff}.btn-primary:hover{background:var(--brand)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}.btn-ghost:hover{background:var(--bg)}
+.btn-danger{background:var(--danger-light);color:var(--danger);border:1px solid rgba(192,57,43,0.15)}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn-sm{padding:4px 9px;font-size:11px}
+.pulse-dot{width:7px;height:7px;border-radius:50%;animation:pulse 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+.status-text{font-size:11px}
+.page{display:none;flex-direction:column;flex:1}
+.page.active{display:flex}
+.content{padding:22px 24px;flex:1}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.card-header{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-title{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.card-title i{font-size:15px;color:var(--brand-mid)}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:15px 16px}
+.stat-label{font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px}
+.stat-value{font-size:28px;font-weight:600;letter-spacing:-1.5px;line-height:1}
+.stat-meta{font-size:11px;color:var(--text3);margin-top:5px}
+.meta-up{color:var(--success)}.meta-warn{color:var(--warn)}.meta-danger{color:var(--danger)}
+.two-col{display:grid;grid-template-columns:1fr 340px;gap:16px}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;line-height:1.5}
+.badge-critical{background:var(--danger-light);color:var(--danger)}
+.badge-high{background:var(--warn-light);color:var(--warn)}
+.badge-medium{background:var(--brand-light);color:var(--brand)}
+.badge-low{background:#f0f0f0;color:#777}
+.badge-new{background:#e8f5ee;color:var(--success)}
+.badge-rbi{background:#fff3e0;color:#bf5900}
+.badge-sebi{background:#e8eef8;color:#1a3a6b}
+.badge-irdai{background:#e8f5ee;color:#1a5c35}
+.badge-fiu{background:#f3e8ff;color:#6b1a6b}
+.alert-item{padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s;display:flex;gap:11px;align-items:flex-start}
+.alert-item:hover{background:#f9fafd}
+.alert-item:last-child{border-bottom:none}
+.alert-item.selected{background:var(--brand-light);border-left:3px solid var(--brand-mid);padding-left:13px}
+.alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.dot-critical{background:var(--danger)}.dot-high{background:var(--warn)}.dot-medium{background:var(--brand-mid)}.dot-low{background:#bbb}
+.alert-title-text{font-size:12.5px;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:3px}
+.alert-meta-row{font-size:11px;color:var(--text3);display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:3px}
+.ai-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ai-header{padding:11px 16px;background:linear-gradient(135deg,#1a2540,#1a3a6b);display:flex;align-items:center;gap:8px}
+.ai-label{font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);text-transform:uppercase;letter-spacing:0.8px}
+.ai-model{font-size:10px;color:rgba(255,255,255,0.35);margin-left:auto}
+.ai-body{padding:14px 16px}
+.ai-text{font-size:12.5px;color:var(--text);line-height:1.75;min-height:80px}
+.typing-cursor{display:inline-block;width:2px;height:13px;background:var(--brand-mid);vertical-align:text-bottom;animation:blink 0.9s step-end infinite;margin-left:1px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.cl-title{font-size:10.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.6px;margin:14px 0 8px}
+.cl-item{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px}
+.cl-item:last-child{border-bottom:none}
+.check-box{width:16px;height:16px;border:1.5px solid var(--border);border-radius:4px;flex-shrink:0;margin-top:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s}
+.check-box.checked{background:var(--brand-mid);border-color:var(--brand-mid)}
+.check-box.checked::after{content:'✓';color:#fff;font-size:9px;font-weight:700}
+.cl-dept{font-size:10px;color:var(--text3);margin-top:2px}
+.dl-chip{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:4px;flex-shrink:0;font-weight:500}
+.chip-urgent{background:var(--danger-light);color:var(--danger)}
+.chip-soon{background:var(--warn-light);color:var(--warn)}
+.chip-ok{background:var(--success-light);color:var(--success)}
+.ask-bar{display:flex;gap:8px;padding:11px 14px;border-top:1px solid var(--border);background:var(--bg)}
+.ask-input{flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);background:var(--card);outline:none}
+.ask-input:focus{border-color:var(--brand-mid)}
+.tabs{display:flex;padding:0 16px;border-bottom:1px solid var(--border)}
+.tab{padding:10px 13px;font-size:12px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;white-space:nowrap}
+.tab.active{color:var(--brand-mid);border-bottom-color:var(--brand-mid);font-weight:500}
+.reg-row{padding:10px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.reg-row:last-child{border-bottom:none}
+.reg-logo{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.reg-rbi{background:#fff3e0;color:#bf5900}.reg-sebi{background:#e8eef8;color:#1a3a6b}.reg-irdai{background:#e8f5ee;color:#1a5c35}.reg-fiu{background:#f3e8ff;color:#6b1a6b}
+.pill{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:500}
+.pill-live{background:#e8f5ee;color:var(--success)}
+.tl-item{display:flex;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px}
+.tl-item:last-child{border-bottom:none}
+.tl-time{color:var(--text3);width:65px;flex-shrink:0;font-size:10.5px;padding-top:2px}
+.tl-dot{width:7px;height:7px;border-radius:50%;background:var(--brand-mid);flex-shrink:0;margin-top:3px}
+.filter-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.filter-select{padding:6px 10px;border-radius:7px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text2);background:var(--card);outline:none;cursor:pointer}
+.alert-card-full{padding:14px 18px;border-bottom:1px solid var(--border);background:var(--card);cursor:pointer;transition:background 0.12s;display:flex;gap:12px}
+.alert-card-full:hover{background:#f9fafd}
+.alert-card-full:last-child{border-bottom:none}
+.acf-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.4}
+.acf-desc{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:6px}
+.acf-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.action-section-hdr{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border)}
+.action-item-full{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;background:var(--card);transition:background 0.12s}
+.action-item-full:hover{background:#f9fafd}
+.action-item-full:last-child{border-bottom:none}
+.aif-text{font-size:12.5px;color:var(--text);font-weight:500;margin-bottom:3px}
+.aif-sub{font-size:11px;color:var(--text3);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chart-container{padding:16px}
+.bar-chart{display:flex;align-items:flex-end;gap:16px;height:150px;border-bottom:2px solid var(--border);padding-bottom:6px}
+.bar-group{display:flex;flex-direction:column;align-items:center;flex:1}
+.bar{border-radius:5px 5px 0 0;width:100%;min-height:4px;cursor:pointer;transition:opacity 0.2s}
+.bar:hover{opacity:0.75}
+.bar-lbl{font-size:11px;color:var(--text3);text-align:center;margin-top:7px}
+.donut-wrap{display:flex;align-items:center;justify-content:center;gap:20px;padding:16px}
+.donut-legend{display:flex;flex-direction:column;gap:8px}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:12px}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.metric-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:14px}
+.metric-item{padding:14px;background:var(--bg);border-radius:8px;border:1px solid var(--border)}
+.metric-val{font-size:24px;font-weight:700;letter-spacing:-0.5px;color:var(--text)}
+.metric-lbl{font-size:11px;color:var(--text3);margin-top:3px}
+.settings-block{margin-bottom:22px}
+.settings-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.settings-title i{color:var(--brand-mid)}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--card);gap:16px}
+.setting-row:first-of-type{border-radius:10px 10px 0 0}
+.setting-row:last-of-type{border-radius:0 0 10px 10px;border-bottom:none}
+.setting-label{font-size:12.5px;font-weight:500;color:var(--text)}
+.setting-desc{font-size:11px;color:var(--text3);margin-top:2px}
+.toggle{width:38px;height:22px;border-radius:11px;cursor:pointer;position:relative;transition:background 0.2s;flex-shrink:0;border:none;outline:none}
+.toggle.on{background:var(--brand-mid)}.toggle.off{background:#d0d0d0}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;transition:left 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+.toggle.on::after{left:19px}.toggle.off::after{left:3px}
+.setting-input{padding:6px 10px;border-radius:7px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text);outline:none}
+.setting-input:focus{border-color:var(--brand-mid)}
+.team-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--card)}
+.team-row:first-child{border-radius:10px 10px 0 0}
+.team-row:last-child{border-radius:0 0 10px 10px;border-bottom:none}
+.member-avatar{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.notif-banner{background:var(--accent-light);border:1px solid rgba(224,92,46,0.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:12px;color:var(--accent);animation:slideIn 0.3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.error-banner{background:var(--danger-light);border:1px solid rgba(192,57,43,0.15);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:12px;color:var(--danger)}
+.empty-state{padding:48px 20px;text-align:center;color:var(--text3)}
+.empty-state i{font-size:36px;margin-bottom:12px;display:block;opacity:0.3}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.shimmer{background:linear-gradient(90deg,#f0f0f0 25%,#e8e8e8 50%,#f0f0f0 75%);background-size:400px 100%;animation:shimmer 1.4s infinite;border-radius:4px;height:13px;margin-bottom:8px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100}
+.modal{background:var(--card);border-radius:14px;padding:28px;width:440px;box-shadow:0 20px 60px rgba(0,0,0,0.2)}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:6px}
+.modal-sub{font-size:12px;color:var(--text3);margin-bottom:22px;line-height:1.65}
+.modal input{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;margin-bottom:16px}
+.modal input:focus{border-color:var(--brand-mid)}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.spinning{animation:spin 1s linear infinite;display:inline-block}
+
+/* ── Login Screen ── */
+#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#0f1828 0%,#1a2f5e 50%,#0f1828 100%);display:flex;align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:0}
+.login-box{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:18px;padding:40px;width:400px;backdrop-filter:blur(20px)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo-icon{font-size:40px;display:block;margin-bottom:8px}
+.login-logo-name{font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.5px}
+.login-logo-sub{font-size:11px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.5px;margin-top:3px}
+.login-label{font-size:12px;font-weight:500;color:rgba(255,255,255,0.6);display:block;margin-bottom:6px}
+.login-input{width:100%;padding:11px 14px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);font-family:'DM Sans',sans-serif;font-size:13px;color:#fff;outline:none;margin-bottom:14px;transition:border 0.15s}
+.login-input::placeholder{color:rgba(255,255,255,0.25)}
+.login-input:focus{border-color:rgba(59,111,202,0.7);background:rgba(255,255,255,0.09)}
+.login-btn{width:100%;padding:12px;border-radius:9px;border:none;background:var(--brand-mid);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:background 0.15s;margin-top:4px}
+.login-btn:hover{background:var(--brand)}
+.login-btn:disabled{opacity:0.6;cursor:not-allowed}
+.login-error{color:#ff7c7c;font-size:12px;text-align:center;margin-top:10px;display:none}
+.login-demo{text-align:center;margin-top:16px}
+.login-demo-btn{background:none;border:none;color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:underline}
+.login-demo-btn:hover{color:rgba(255,255,255,0.6)}
+.login-divider{display:flex;align-items:center;gap:10px;margin:16px 0}
+.login-divider span{color:rgba(255,255,255,0.2);font-size:11px;white-space:nowrap}
+.login-divider::before,.login-divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.08)}
+.login-dots{display:flex;justify-content:center;gap:6px;margin-top:28px}
+.login-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.15)}
+.login-dot.active{background:var(--brand-mid)}
+.user-chip{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,0.05);border-radius:8px;cursor:pointer;margin-bottom:8px}
+.user-chip:hover{background:rgba(255,255,255,0.09)}
+.user-chip-avatar{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.user-chip-name{font-size:12px;color:rgba(255,255,255,0.8);font-weight:500}
+.user-chip-role{font-size:10px;color:rgba(255,255,255,0.35)}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <span class="login-logo-icon">🛡</span>
+      <div class="login-logo-name">FinGuard</div>
+      <div class="login-logo-sub">Compliance Monitor</div>
+    </div>
+
+    <div id="login-form">
+      <label class="login-label">Email Address</label>
+      <input class="login-input" type="email" id="login-email" placeholder="compliance@yourbank.com" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()">
+      <label class="login-label">Password</label>
+      <input class="login-input" type="password" id="login-pass" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+      <div class="login-error" id="login-error">Incorrect email or password. Please try again.</div>
+      <div class="login-divider"><span>or sign in as</span></div>
+      <div id="quick-users"></div>
+      <div class="login-demo">
+        <button class="login-demo-btn" onclick="demoLogin()">Continue in Demo Mode (no login required)</button>
+      </div>
+    </div>
+  </div>
+  <div class="login-dots" style="margin-top:24px">
+    <div class="login-dot active"></div><div class="login-dot"></div><div class="login-dot"></div>
+  </div>
+  <div style="color:rgba(255,255,255,0.2);font-size:11px;margin-top:16px">FinGuard v1.0 · Powered by Claude AI</div>
+</div>
+
+<div class="layout" style="display:none">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">
+    <div style="font-size:22px;margin-bottom:3px">🛡</div>
+    <div class="logo-name">FinGuard</div>
+    <div class="logo-sub">Compliance Monitor</div>
+  </div>
+  <div class="nav">
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><i class="ti ti-dashboard"></i> Dashboard</div>
+    <div class="nav-item" onclick="showPage('alerts',this)"><i class="ti ti-bell"></i> Alerts <span class="nav-badge nb-danger" id="nav-new-badge" style="display:none">0</span></div>
+    <div class="nav-item" onclick="showPage('actions',this)"><i class="ti ti-checklist"></i> Action Items <span class="nav-badge nb-warn" id="nav-action-badge" style="display:none">0</span></div>
+    <div class="nav-section">Analysis</div>
+    <div class="nav-item" onclick="showPage('reports',this)"><i class="ti ti-chart-bar"></i> Reports</div>
+    <div class="nav-section">Config</div>
+    <div class="nav-item" onclick="showPage('settings',this)"><i class="ti ti-settings"></i> Settings</div>
+    <div class="nav-item" onclick="performLogout()"><i class="ti ti-logout"></i> Logout</div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="bank-badge" onclick="doLogout()" title="Click to logout">
+      <div class="bank-avatar" id="sb-avatar">IC</div>
+      <div style="flex:1;min-width:0">
+        <div class="bank-name" id="sb-name">ICICI Bank</div>
+        <div class="bank-role" id="sb-role">Compliance Team</div>
+      </div>
+      <i class="ti ti-logout" style="font-size:14px;color:rgba(255,255,255,0.3);flex-shrink:0"></i>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="topbar-title">Dashboard</div>
+      <div class="page-sub" id="topbar-sub">Connecting...</div>
+    </div>
+    <div class="topbar-right">
+      <div class="pulse-dot" id="pulse" style="background:#aaa"></div>
+      <span class="status-text" id="status-text" style="color:var(--text3)">Connecting</span>
+      <button class="btn btn-ghost" id="scan-btn" onclick="triggerScan()"><i class="ti ti-refresh"></i> Scan Now</button>
+      <button class="btn btn-primary" onclick="exportCSV()"><i class="ti ti-download"></i> Export CSV</button>
+    </div>
+  </div>
+
+  <!-- PAGE: DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="content">
+      <div class="notif-banner" id="notif-banner" style="display:none">
+        <i class="ti ti-bell" style="font-size:15px;flex-shrink:0"></i>
+        <span id="notif-text"></span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="this.parentElement.style.display='none'">✕</button>
+      </div>
+      <div class="error-banner" id="error-banner" style="display:none">
+        <i class="ti ti-alert-circle" style="font-size:15px;flex-shrink:0"></i>
+        <span id="error-text">Cannot reach backend.</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="doLogout()">Re-login</button>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">Total Circulars</div><div class="stat-value" style="color:var(--brand-mid)" id="s-total">—</div><div class="stat-meta" id="s-total-meta">Loading...</div></div>
+        <div class="stat-card"><div class="stat-label">Critical / High</div><div class="stat-value" style="color:var(--danger)" id="s-critical">—</div><div class="stat-meta"><span class="meta-danger">Need attention</span></div></div>
+        <div class="stat-card"><div class="stat-label">Actions Done</div><div class="stat-value" style="color:var(--success)" id="s-done">0</div><div class="stat-meta"><span class="meta-up">This session</span></div></div>
+        <div class="stat-card"><div class="stat-label">Regulators Live</div><div class="stat-value" style="color:var(--warn)">4</div><div class="stat-meta">RBI · SEBI · IRDAI · FIU</div></div>
+      </div>
+      <div class="two-col">
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title"><i class="ti ti-alert-circle"></i> Regulatory Alerts</div>
+              <select class="filter-select" style="font-size:11px;padding:3px 8px" onchange="dashRegFilter=this.value;renderDashAlerts()">
+                <option value="">All Regulators</option>
+                <option value="RBI">RBI</option><option value="SEBI">SEBI</option><option value="IRDAI">IRDAI</option><option value="FIU">FIU</option>
+              </select>
+            </div>
+            <div class="tabs">
+              <div class="tab active" onclick="dashTab(this,'all')">All</div>
+              <div class="tab" onclick="dashTab(this,'critical')">Critical</div>
+              <div class="tab" onclick="dashTab(this,'high')">High</div>
+              <div class="tab" onclick="dashTab(this,'unseen')">Unseen</div>
+            </div>
+            <div id="dash-list"><div style="padding:16px"><div class="shimmer" style="width:80%"></div><div class="shimmer" style="width:60%"></div><div class="shimmer" style="width:75%;margin-top:12px"></div><div class="shimmer" style="width:55%"></div></div></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="ai-card">
+            <div class="ai-header"><i class="ti ti-robot" style="font-size:14px;color:rgba(255,255,255,0.6)"></i><div class="ai-label">AI Summary</div><div class="ai-model">Powered by Claude</div></div>
+            <div class="ai-body">
+              <div class="ai-text" id="ai-text">Click any circular to see its AI-generated plain-English summary and action checklist.</div>
+              <div id="cl-wrap" style="display:none"><div class="cl-title">Action Checklist</div><div id="cl-items"></div></div>
+            </div>
+            <div class="ask-bar">
+              <input class="ask-input" id="ask-input" placeholder="Ask about this circular…" onkeydown="if(event.key==='Enter')askAI()">
+              <button class="btn btn-primary" onclick="askAI()" style="padding:7px 10px"><i class="ti ti-send" style="font-size:13px"></i></button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="ti ti-building-bank"></i> Monitored Sources</div><span style="font-size:10px;color:var(--text3)">Every 15 min</span></div>
+            <div class="reg-row"><div class="reg-logo reg-rbi">RBI</div><div style="flex:1"><div style="font-size:12px;font-weight:600">Reserve Bank of India</div><div style="font-size:10.5px;color:var(--text3)"><span id="rbi-c">—</span> circulars</div></div><span class="pill pill-live">Live</span></div>
+            <div class="reg-row"><div class="reg-logo reg-sebi">SEBI</div><div style="flex:1"><div style="font-size:12px;font-weight:600">SEBI</div><div style="font-size:10.5px;color:var(--text3)"><span id="sebi-c">—</span> circulars</div></div><span class="pill pill-live">Live</span></div>
+            <div class="reg-row"><div class="reg-logo reg-irdai">IR</div><div style="flex:1"><div style="font-size:12px;font-weight:600">IRDAI</div><div style="font-size:10.5px;color:var(--text3)"><span id="irdai-c">—</span> circulars</div></div><span class="pill pill-live">Live</span></div>
+            <div class="reg-row"><div class="reg-logo reg-fiu">FIU</div><div style="flex:1"><div style="font-size:12px;font-weight:600">FIU-IND</div><div style="font-size:10.5px;color:var(--text3)"><span id="fiu-c">—</span> circulars</div></div><span class="pill pill-live">Live</span></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title"><i class="ti ti-clock"></i> Recent Activity</div></div>
+            <div id="timeline"><div class="tl-item"><div class="tl-time">—</div><div class="tl-dot"></div><div style="color:var(--text3)">Loading...</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: ALERTS -->
+  <div class="page" id="page-alerts">
+    <div class="content">
+      <div class="filter-bar">
+        <select class="filter-select" id="af-reg" onchange="renderAlertsPage()"><option value="">All Regulators</option><option value="RBI">RBI</option><option value="SEBI">SEBI</option><option value="IRDAI">IRDAI</option><option value="FIU">FIU</option></select>
+        <select class="filter-select" id="af-sev" onchange="renderAlertsPage()"><option value="">All Severities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+        <select class="filter-select" id="af-seen" onchange="renderAlertsPage()"><option value="">All Status</option><option value="unseen">Unseen only</option><option value="seen">Seen only</option></select>
+        <span style="margin-left:auto;font-size:12px;color:var(--text3)" id="alerts-count">— circulars</span>
+        <button class="btn btn-ghost btn-sm" onclick="markAllSeen()"><i class="ti ti-checks"></i> Mark all seen</button>
+      </div>
+      <div class="card" id="alerts-container"><div style="padding:20px"><div class="shimmer" style="width:90%"></div><div class="shimmer" style="width:70%"></div></div></div>
+    </div>
+  </div>
+
+  <!-- PAGE: ACTION ITEMS -->
+  <div class="page" id="page-actions">
+    <div class="content">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div><div style="font-size:14px;font-weight:600">Action Items</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Track compliance tasks across all circulars</div></div>
+        <select class="filter-select" id="action-filter" onchange="renderActionsPage()"><option value="all">All items</option><option value="urgent">Urgent only</option><option value="pending">Pending only</option><option value="done">Completed</option></select>
+      </div>
+      <div class="three-col" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-label">Urgent</div><div class="stat-value" style="color:var(--danger)" id="act-urgent">—</div><div class="stat-meta">Due within 7 days</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--warn)" id="act-pending">—</div><div class="stat-meta">Due within 30 days</div></div>
+        <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-value" style="color:var(--success)" id="act-done-count">—</div><div class="stat-meta">Actions ticked off</div></div>
+      </div>
+      <div class="card" id="actions-list"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: REPORTS -->
+  <div class="page" id="page-reports">
+    <div class="content">
+      <div style="margin-bottom:20px"><div style="font-size:14px;font-weight:600">Reports & Analytics</div><div style="font-size:12px;color:var(--text3);margin-top:2px">Compliance intelligence across all regulators</div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="ti ti-chart-bar"></i> Circulars by Regulator</div></div>
+          <div class="chart-container"><div class="bar-chart" id="bar-chart"></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="ti ti-chart-donut"></i> By Severity</div></div>
+          <div class="donut-wrap"><svg width="100" height="100" viewBox="0 0 100 100" id="donut-svg"><circle cx="50" cy="50" r="38" fill="none" stroke="#f0f0f0" stroke-width="16"/></svg><div class="donut-legend" id="donut-legend"></div></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="ti ti-trending-up"></i> Key Metrics</div></div>
+          <div class="metric-grid" id="metrics-grid"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title"><i class="ti ti-table"></i> Regulator Breakdown</div></div>
+          <div id="reg-table" style="padding:8px 0"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="content" style="max-width:680px">
+      <div class="settings-block">
+        <div class="settings-title"><i class="ti ti-building-bank"></i> Regulators</div>
+        <div class="setting-row"><div><div class="setting-label">Reserve Bank of India (RBI)</div><div class="setting-desc">rbi.org.in — circulars, notifications, master directions</div></div><button class="toggle on" onclick="toggleSetting(this)"></button></div>
+        <div class="setting-row"><div><div class="setting-label">SEBI</div><div class="setting-desc">sebi.gov.in — circulars, orders, press releases</div></div><button class="toggle on" onclick="toggleSetting(this)"></button></div>
+        <div class="setting-row"><div><div class="setting-label">IRDAI</div><div class="setting-desc">irdai.gov.in — insurance regulations and circulars</div></div><button class="toggle on" onclick="toggleSetting(this)"></button></div>
+        <div class="setting-row"><div><div class="setting-label">FIU-IND</div><div class="setting-desc">fiuindia.gov.in — anti-money laundering guidelines</div></div><button class="toggle on" onclick="toggleSetting(this)"></button></div>
+        <div class="setting-row"><div><div class="setting-label">Ministry of Finance</div><div class="setting-desc">finmin.nic.in — budget circulars and notifications</div></div><button class="toggle off" onclick="toggleSetting(this)"></button></div>
+      </div>
+      <div class="settings-block">
+        <div class="settings-title"><i class="ti ti-bell"></i> Alerts & Notifications</div>
+        <div class="setting-row"><div><div class="setting-label">Email alerts for Critical circulars</div><div class="setting-desc">Notify the compliance team instantly when a critical circular is detected</div></div><button class="toggle on" onclick="toggleSetting(this)"></button></div>
+        <div class="setting-row"><div><div class="setting-label">Daily digest email</div><div class="setting-desc">Summary of all new circulars every morning at 9 AM</div></div><button class="toggle on" onclick="toggleSetting(this)"></button></div>
+        <div class="setting-row"><div><div class="setting-label">WhatsApp alerts</div><div class="setting-desc">Send WhatsApp messages via Twilio for urgent circulars</div></div><button class="toggle off" onclick="toggleSetting(this)"></button></div>
+        <div class="setting-row"><div><div class="setting-label">Alert email address</div><div class="setting-desc">Where to send compliance notifications</div></div><input class="setting-input" type="email" placeholder="compliance@bank.com" value="compliance@icicibank.com"></div>
+      </div>
+      <div class="settings-block">
+        <div class="settings-title"><i class="ti ti-clock"></i> Scan Schedule</div>
+        <div class="setting-row"><div><div class="setting-label">Auto-scan frequency</div><div class="setting-desc">How often FinGuard checks regulators for new circulars</div></div><select class="filter-select"><option>Every 15 minutes</option><option>Every 30 minutes</option><option>Every hour</option></select></div>
+        <div class="setting-row"><div><div class="setting-label">AI auto-summarize new circulars</div><div class="setting-desc">Automatically generate AI summary when a new circular is detected</div></div><button class="toggle on" onclick="toggleSetting(this)"></button></div>
+      </div>
+      <div class="settings-block">
+        <div class="settings-title"><i class="ti ti-users"></i> Team Members</div>
+        <div id="team-members-list"></div>
+        <div class="team-row" style="border-bottom:none;border-radius:0 0 10px 10px;background:var(--card)"><div style="flex:1;font-size:12px;color:var(--text3)">Invite new team member</div><div style="display:flex;gap:8px"><input class="setting-input" type="email" placeholder="email@bank.com" style="width:180px"><button class="btn btn-primary btn-sm" onclick="showNotif('✅ Invitation sent!')"><i class="ti ti-plus"></i> Invite</button></div></div>
+      </div>
+      <div class="settings-block">
+        <div class="settings-title"><i class="ti ti-database"></i> Data & Storage</div>
+        <div class="setting-row"><div><div class="setting-label">Clear all stored data</div><div class="setting-desc">Delete all circulars and summaries from the local database</div></div><button class="btn btn-danger btn-sm" onclick="showNotif('Data cleared — rescan to reload')"><i class="ti ti-trash"></i> Clear Data</button></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary" onclick="showNotif('✅ Settings saved successfully')"><i class="ti ti-check"></i> Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+</div><!-- end .layout -->
+
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────────
+const RAILWAY_URL = 'https://finguard-backend.up.railway.app'; // ← Replace with your Railway URL after deploying
+const LOCAL_URL   = 'http://localhost:3001';
+
+// ── Users (in production move this to backend with hashed passwords) ───────────
+const USERS = [
+  { email:'admin@finguard.in',    password:'admin123',   name:'Admin User',     role:'Super Admin',         bank:'FinGuard',      avatar:'FG', color:'#3B6FCA' },
+  { email:'compliance@icici.com', password:'icici2024',  name:'Priya Sharma',   role:'Chief Compliance Officer', bank:'ICICI Bank', avatar:'PS', color:'#b85c00' },
+  { email:'risk@hdfc.com',        password:'hdfc2024',   name:'Rahul Mehta',    role:'Head of Risk',        bank:'HDFC Bank',     avatar:'RM', color:'#1a7a4a' },
+  { email:'legal@axisbank.com',   password:'axis2024',   name:'Sneha Patil',    role:'Legal & Compliance',  bank:'Axis Bank',     avatar:'SP', color:'#6b1a6b' },
+  { email:'demo@finguard.in',     password:'demo123',    name:'Demo User',      role:'Viewer',              bank:'Demo Bank',     avatar:'DU', color:'#888' },
+];
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let API_URL = '';
+let currentUser = null;
+let allCirculars = [];
+let selectedCircular = null;
+let demoMode = false;
+let dashTabFilter = 'all';
+let dashRegFilter = '';
+let doneCount = 0;
+
+// ── Demo Data ──────────────────────────────────────────────────────────────────
+const DEMO = [
+  {id:'d1',title:'RBI: Revised KYC Norms for Digital Lending Platforms',regulator:'RBI',severity:'critical',date:'2026-07-15',seen:false,summarized:true,scrapedAt:new Date().toISOString(),sourceUrl:'https://rbi.org.in',summary:'RBI has mandated video-based KYC for all new digital loan applicants. Banks must also re-verify customers who onboarded via paper KYC before January 2022. Non-compliance may attract penalties under Section 47A of the Banking Regulation Act.',checklist:[{action:'Update digital onboarding for video KYC',dept:'Digital Banking',deadline:'urgent',done:false},{action:'Identify customers needing re-KYC (pre-Jan 2022)',dept:'Data & Analytics',deadline:'soon',done:false},{action:'Notify loan origination team of new rules',dept:'Retail Loans',deadline:'soon',done:false},{action:'Update internal compliance policy document',dept:'Legal & Compliance',deadline:'ok',done:false}]},
+  {id:'d2',title:'SEBI: Updated Margin Pledge Mechanism for Equity Derivatives',regulator:'SEBI',severity:'high',date:'2026-07-15',seen:false,summarized:true,scrapedAt:new Date(Date.now()-3600000).toISOString(),sourceUrl:'https://sebi.gov.in',summary:'SEBI requires real-time reporting of pledged collateral to clearing corporations, reducing the reporting window from T+1 to same-day. Failure to comply may result in trading restrictions for the defaulting entity.',checklist:[{action:'Update margin reporting for real-time feeds',dept:'IT / Systems',deadline:'urgent',done:false},{action:'Coordinate with clearing corporation on API specs',dept:'Operations',deadline:'soon',done:false},{action:'Inform institutional clients of timeline change',dept:'Relationship Mgmt',deadline:'ok',done:false}]},
+  {id:'d3',title:'RBI: Master Direction on Interest Rate Risk in Banking Book (IRRBB)',regulator:'RBI',severity:'high',date:'2026-07-14',seen:true,summarized:true,scrapedAt:new Date(Date.now()-86400000).toISOString(),sourceUrl:'https://rbi.org.in',summary:'Banks with assets above ₹10,000 Cr must adopt the standardised approach for IRRBB by March 2026. Quarterly IRRBB disclosures are now mandatory in annual reports.',checklist:[{action:'Conduct gap analysis vs new IRRBB framework',dept:'Risk Management',deadline:'soon',done:false},{action:'Build quarterly IRRBB disclosure template',dept:'Finance / Treasury',deadline:'ok',done:false},{action:'Train ALM desk on standardised approach',dept:'HR / Training',deadline:'ok',done:true}]},
+  {id:'d4',title:'IRDAI: New Guidelines on Bancassurance Distribution Commission Limits',regulator:'IRDAI',severity:'medium',date:'2026-07-13',seen:true,summarized:true,scrapedAt:new Date(Date.now()-172800000).toISOString(),sourceUrl:'https://irdai.gov.in',summary:'IRDAI revised commission caps for bancassurance partners. Banks acting as corporate agents must renegotiate agreements exceeding the new limits within 90 days of the circular date.',checklist:[{action:'Review all bancassurance partner agreements',dept:'Legal & Compliance',deadline:'soon',done:false},{action:'Calculate revenue impact of commission cap change',dept:'Finance',deadline:'ok',done:true}]},
+  {id:'d5',title:'FIU-IND: Enhanced STR Reporting for Crypto-Linked Transactions',regulator:'FIU',severity:'medium',date:'2026-07-12',seen:true,summarized:true,scrapedAt:new Date(Date.now()-259200000).toISOString(),sourceUrl:'https://fiuindia.gov.in',summary:'Banks must file Suspicious Transaction Reports for VDA-linked fund flows within 7 days, reduced from 30 days. Transaction monitoring systems must be updated to detect and flag such transactions.',checklist:[{action:'Update transaction monitoring rules for VDA detection',dept:'AML / Fraud',deadline:'urgent',done:false},{action:'Reduce STR SLA from 30 to 7 days in compliance manual',dept:'Legal & Compliance',deadline:'soon',done:false}]},
+  {id:'d6',title:'RBI: Revised Priority Sector Lending Sub-Targets for FY2026',regulator:'RBI',severity:'low',date:'2026-07-10',seen:true,summarized:true,scrapedAt:new Date(Date.now()-345600000).toISOString(),sourceUrl:'https://rbi.org.in',summary:'Agriculture PSL sub-target increases from 8% to 9% of ANBC for FY2025-26. Banks must update PSL tracking and reporting systems accordingly.',checklist:[{action:'Update PSL tracking dashboard with new sub-targets',dept:'Priority Sector Cell',deadline:'ok',done:true}]},
+  {id:'d7',title:'SEBI: Circular on ESG Rating Providers — Code of Conduct',regulator:'SEBI',severity:'low',date:'2026-07-09',seen:true,summarized:true,scrapedAt:new Date(Date.now()-432000000).toISOString(),sourceUrl:'https://sebi.gov.in',summary:'Banks with ESG-linked loan products must ensure rating providers are SEBI-registered. A compliance verification is required before the next disbursement cycle.',checklist:[{action:'Verify ESG rating providers are SEBI-registered',dept:'Credit Risk',deadline:'ok',done:true}]},
+];
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+window.onload = () => {
+  renderQuickUsers();
+  // Check if already logged in this session
+  const saved = sessionStorage.getItem('fg_user');
+  if (saved) {
+    currentUser = JSON.parse(saved);
+    showApp();
+  }
+};
+
+// ── Login ──────────────────────────────────────────────────────────────────────
+function renderQuickUsers() {
+  const container = document.getElementById('quick-users');
+  // Show first 3 non-demo users as quick login chips
+  container.innerHTML = USERS.slice(0,3).map(u => `
+    <div class="user-chip" onclick="quickLogin('${u.email}')">
+      <div class="user-chip-avatar" style="background:${u.color}">${u.avatar}</div>
+      <div>
+        <div class="user-chip-name">${u.name}</div>
+        <div class="user-chip-role">${u.bank} · ${u.role}</div>
+      </div>
+      <i class="ti ti-arrow-right" style="font-size:13px;color:rgba(255,255,255,0.2);margin-left:auto"></i>
+    </div>`).join('');
+}
+
+function quickLogin(email) {
+  document.getElementById('login-email').value = email;
+  const user = USERS.find(u => u.email === email);
+  if (user) {
+    document.getElementById('login-pass').value = user.password;
+    doLogin();
+  }
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-error');
+  const btn   = document.getElementById('login-btn');
+
+  errEl.style.display = 'none';
+  if (!email || !pass) { errEl.textContent = 'Please enter email and password.'; errEl.style.display = 'block'; return; }
+
+  const user = USERS.find(u => u.email === email && u.password === pass);
+  if (!user) {
+    errEl.textContent = 'Incorrect email or password. Try: compliance@icici.com / icici2024';
+    errEl.style.display = 'block';
+    document.getElementById('login-pass').value = '';
+    return;
+  }
+
+  // Animate button
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  setTimeout(() => {
+    currentUser = user;
+    sessionStorage.setItem('fg_user', JSON.stringify(user));
+    showApp();
+  }, 800);
+}
+
+function demoLogin() {
+  currentUser = USERS.find(u => u.email === 'demo@finguard.in');
+  sessionStorage.setItem('fg_user', JSON.stringify(currentUser));
+  demoMode = true;
+  showApp();
+}
+
+function showApp() {
+  // Hide login screen
+  document.getElementById('login-screen').style.display = 'none';
+  document.querySelector('.layout').style.display = 'flex';
+
+  // Update sidebar with user info
+  document.getElementById('sb-avatar').textContent = currentUser.avatar;
+  document.getElementById('sb-avatar').style.background = currentUser.color;
+  document.getElementById('sb-name').textContent = currentUser.name;
+  document.getElementById('sb-role').textContent = currentUser.bank + ' · ' + currentUser.role;
+
+  // Update topbar sub with user greeting
+  document.getElementById('topbar-sub').textContent = 'Welcome back, ' + currentUser.name.split(' ')[0] + ' 👋';
+
+  // Determine API URL — try Railway first, fallback to local
+  if (demoMode) {
+    loadDemoMode();
+  } else {
+    API_URL = RAILWAY_URL;
+    init();
+  }
+}
+
+function doLogout() {
+  // Show logout confirmation toast in sidebar
+  const badge = document.getElementById('sb-name');
+  const orig = badge.textContent;
+  badge.textContent = 'Click again to logout';
+  badge.style.color = '#ff9999';
+  if (window._logoutTimer) {
+    // Second click — actually logout
+    clearTimeout(window._logoutTimer);
+    window._logoutTimer = null;
+    badge.textContent = orig;
+    badge.style.color = '';
+    performLogout();
+    return;
+  }
+  window._logoutTimer = setTimeout(() => {
+    badge.textContent = orig;
+    badge.style.color = '';
+    window._logoutTimer = null;
+  }, 3000);
+}
+
+function performLogout() {
+  sessionStorage.removeItem('fg_user');
+  currentUser = null; allCirculars = []; selectedCircular = null; doneCount = 0; demoMode = false;
+  // Reset login form
+  document.getElementById('login-btn').textContent = 'Sign In';
+  document.getElementById('login-btn').disabled = false;
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').style.display = 'none';
+  // Show login, hide app
+  document.getElementById('login-screen').style.display = 'flex';
+  document.querySelector('.layout').style.display = 'none';
+}
+
+function loadDemoMode() {
+  allCirculars = JSON.parse(JSON.stringify(DEMO));
+  doneCount = allCirculars.flatMap(c=>c.checklist||[]).filter(i=>i.done).length;
+  updateAll(); setStatus('demo');
+  showNotif('Running in Demo Mode — showing sample data');
+}
+
+async function init() {
+  setStatus('connecting');
+  // Try Railway first, then localhost
+  const urls = [RAILWAY_URL, LOCAL_URL];
+  for (const url of urls) {
+    try {
+      API_URL = url;
+      const { data } = await apiFetch('/api/circulars?limit=50');
+      allCirculars = data;
+      doneCount = data.flatMap(c=>c.checklist||[]).filter(i=>i.done).length;
+      updateAll(); setStatus('live');
+      setInterval(silentRefresh, 60000);
+      return;
+    } catch(e) {
+      console.log('Could not connect to', url);
+    }
+  }
+  // Both failed — go demo mode
+  showError('Backend not reachable. Running in demo mode.');
+  loadDemoMode();
+}
+
+async function apiFetch(path, opts={}) {
+  const res = await fetch(API_URL + path, { headers:{'Content-Type':'application/json'}, ...opts });
+  if (!res.ok) throw new Error('HTTP '+res.status);
+  return res.json();
+}
+
+function updateAll() {
+  updateStats(); renderDashAlerts(); renderTimeline();
+  renderAlertsPage(); renderActionsPage(); renderReports(); updateBadges();
+}
+
+// ── Stats ──────────────────────────────────────────────────────────────────────
+function updateStats() {
+  const total = allCirculars.length;
+  const crit = allCirculars.filter(c=>c.severity==='critical'||c.severity==='high').length;
+  const byR = grp(allCirculars,'regulator');
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-total-meta').textContent = total+' from '+Object.keys(byR).length+' regulators';
+  document.getElementById('s-critical').textContent = crit;
+  document.getElementById('s-done').textContent = doneCount;
+  document.getElementById('rbi-c').textContent = (byR.RBI||[]).length;
+  document.getElementById('sebi-c').textContent = (byR.SEBI||[]).length;
+  document.getElementById('irdai-c').textContent = (byR.IRDAI||[]).length;
+  document.getElementById('fiu-c').textContent = (byR.FIU||[]).length;
+}
+
+function updateBadges() {
+  const unseen = allCirculars.filter(c=>!c.seen).length;
+  const urgActs = allCirculars.flatMap(c=>c.checklist||[]).filter(i=>i.deadline==='urgent'&&!i.done).length;
+  const nb = document.getElementById('nav-new-badge');
+  const ab = document.getElementById('nav-action-badge');
+  nb.textContent=unseen; nb.style.display=unseen>0?'inline-block':'none';
+  ab.textContent=urgActs; ab.style.display=urgActs>0?'inline-block':'none';
+}
+
+// ── Dashboard alerts ───────────────────────────────────────────────────────────
+function renderDashAlerts() {
+  let items = allCirculars;
+  if (dashRegFilter) items = items.filter(c=>c.regulator===dashRegFilter);
+  if (dashTabFilter==='critical') items = items.filter(c=>c.severity==='critical');
+  else if (dashTabFilter==='high') items = items.filter(c=>c.severity==='high');
+  else if (dashTabFilter==='unseen') items = items.filter(c=>!c.seen);
+  const el = document.getElementById('dash-list');
+  if (!items.length) { el.innerHTML='<div class="empty-state"><i class="ti ti-file-off"></i>No circulars match this filter</div>'; return; }
+  el.innerHTML = items.slice(0,15).map(c=>`
+    <div class="alert-item ${selectedCircular?.id===c.id?'selected':''}" onclick="selectCircular('${c.id}')">
+      <div class="alert-dot dot-${c.severity}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="alert-title-text">${c.title}</div>
+        <div class="alert-meta-row">
+          <span class="badge badge-${c.severity}">${cap(c.severity)}</span>
+          <span class="badge badge-${(c.regulator||'').toLowerCase()}">${c.regulator}</span>
+          ${!c.seen?'<span class="badge badge-new">New</span>':''}
+          <span>${fmtDate(c.scrapedAt||c.date)}</span>
+        </div>
+      </div>
+      <i class="ti ti-chevron-right" style="font-size:13px;color:var(--text3);margin-top:3px;flex-shrink:0"></i>
+    </div>`).join('');
+}
+
+function dashTab(el,tab) {
+  document.querySelectorAll('#page-dashboard .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); dashTabFilter=tab; renderDashAlerts();
+}
+
+// ── Select circular ────────────────────────────────────────────────────────────
+async function selectCircular(id) {
+  const c = allCirculars.find(x=>x.id===id);
+  if (!c) return;
+  selectedCircular = c;
+  c.seen = true; updateBadges(); renderDashAlerts();
+  const aiEl = document.getElementById('ai-text');
+  const clWrap = document.getElementById('cl-wrap');
+  clWrap.style.display = 'none';
+  if (c.summary) {
+    typeText(aiEl, c.summary, ()=>{ if(c.checklist?.length){clWrap.style.display='block';renderCL(c.checklist,id);} });
+  } else {
+    aiEl.innerHTML='<span style="color:var(--text3);font-style:italic">Generating AI summary…</span><span class="typing-cursor"></span>';
+    try {
+      const {summary,checklist} = await apiFetch('/api/summarize/'+id,{method:'POST'});
+      const idx=allCirculars.findIndex(x=>x.id===id);
+      if(idx!==-1){allCirculars[idx].summary=summary;allCirculars[idx].checklist=checklist;}
+      typeText(aiEl,summary,()=>{if(checklist?.length){clWrap.style.display='block';renderCL(checklist,id);}});
+    } catch { aiEl.innerHTML='Could not generate summary — check backend and API key.'; }
+  }
+}
+
+function renderCL(items,cid) {
+  document.getElementById('cl-items').innerHTML = items.map((item,idx)=>`
+    <div class="cl-item">
+      <div class="check-box ${item.done?'checked':''}" onclick="toggleCheck('${cid}',${idx},this)"></div>
+      <div style="flex:1"><div id="ci-${cid}-${idx}" style="${item.done?'text-decoration:line-through;color:var(--text3)':''}">${item.action}</div><div class="cl-dept">${item.dept}</div></div>
+      <span class="dl-chip chip-${item.deadline||'ok'}">${cap(item.deadline||'ok')}</span>
+    </div>`).join('');
+}
+
+function toggleCheck(cid,idx,el) {
+  const c=allCirculars.find(x=>x.id===cid);
+  if(!c?.checklist) return;
+  c.checklist[idx].done=!c.checklist[idx].done;
+  el.classList.toggle('checked');
+  const t=document.getElementById(`ci-${cid}-${idx}`);
+  if(t){t.style.textDecoration=c.checklist[idx].done?'line-through':'';t.style.color=c.checklist[idx].done?'var(--text3)':'';}
+  doneCount+=c.checklist[idx].done?1:-1;
+  if(!demoMode) apiFetch(`/api/circulars/${cid}/checklist/${idx}`,{method:'PATCH',body:JSON.stringify({done:c.checklist[idx].done})}).catch(()=>{});
+  updateStats(); updateBadges(); renderActionsPage();
+}
+
+// ── Ask AI ─────────────────────────────────────────────────────────────────────
+async function askAI() {
+  const inp=document.getElementById('ask-input');
+  const q=inp.value.trim(); if(!q) return;
+  if(!selectedCircular){showNotif('Select a circular first');return;}
+  inp.value='';
+  const aiEl=document.getElementById('ai-text');
+  aiEl.innerHTML=`<span style="font-size:11px;color:var(--text3);font-style:italic">Q: ${q}</span><br><br><span class="typing-cursor"></span>`;
+  try {
+    let ans;
+    if(demoMode){
+      await sleep(800);
+      if(q.toLowerCase().includes('deadline')||q.toLowerCase().includes('when')) ans='Based on the circular, urgent items must be addressed within 7 days, standard items within 30-90 days. Contact your CCO to request a regulatory extension if needed.';
+      else if(q.toLowerCase().includes('penalty')||q.toLowerCase().includes('fine')) ans='Non-compliance with RBI/SEBI directives can attract penalties of ₹1 lakh to ₹1 crore per instance. Serious violations may trigger a Show Cause Notice or business restrictions.';
+      else if(q.toLowerCase().includes('team')||q.toLowerCase().includes('who')) ans='This circular requires action from Legal & Compliance (lead), IT/Systems, and the relevant business unit. The CCO should chair a review within 48 hours.';
+      else ans='Prioritise the "Urgent" checklist items immediately. Schedule a cross-functional meeting with Legal, IT, and the business unit within 2 working days to assign ownership and deadlines.';
+    } else {
+      const r=await apiFetch('/api/ask/'+selectedCircular.id,{method:'POST',body:JSON.stringify({question:q})});
+      ans=r.answer;
+    }
+    typeText(aiEl,`<span style="font-size:11px;color:var(--text3);font-style:italic">Q: ${q}</span><br><br>`+ans);
+  } catch { showNotif('Could not get answer — check backend'); }
+}
+
+// ── Alerts page ────────────────────────────────────────────────────────────────
+function renderAlertsPage() {
+  const reg=document.getElementById('af-reg')?.value||'';
+  const sev=document.getElementById('af-sev')?.value||'';
+  const seen=document.getElementById('af-seen')?.value||'';
+  let items=allCirculars;
+  if(reg) items=items.filter(c=>c.regulator===reg);
+  if(sev) items=items.filter(c=>c.severity===sev);
+  if(seen==='unseen') items=items.filter(c=>!c.seen);
+  if(seen==='seen') items=items.filter(c=>c.seen);
+  document.getElementById('alerts-count').textContent=items.length+' circulars';
+  const con=document.getElementById('alerts-container');
+  if(!items.length){con.innerHTML='<div class="empty-state"><i class="ti ti-filter-off"></i>No circulars match your filters</div>';return;}
+  con.innerHTML=items.map(c=>`
+    <div class="alert-card-full" onclick="goToCircular('${c.id}')">
+      <div class="alert-dot dot-${c.severity}" style="margin-top:6px;flex-shrink:0"></div>
+      <div style="flex:1;min-width:0">
+        <div class="acf-title">${c.title}</div>
+        ${c.summary?`<div class="acf-desc">${c.summary.substring(0,130)}…</div>`:'<div class="acf-desc" style="font-style:italic">No summary yet — click to generate</div>'}
+        <div class="acf-meta">
+          <span class="badge badge-${c.severity}">${cap(c.severity)}</span>
+          <span class="badge badge-${(c.regulator||'').toLowerCase()}">${c.regulator}</span>
+          ${!c.seen?'<span class="badge badge-new">New</span>':''}
+          <span style="font-size:11px;color:var(--text3)">${fmtDate(c.scrapedAt||c.date)}</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+        <span class="btn btn-ghost btn-sm">View <i class="ti ti-arrow-right"></i></span>
+        ${c.checklist?`<span style="font-size:10.5px;color:var(--text3)">${c.checklist.filter(i=>i.done).length}/${c.checklist.length} done</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function markAllSeen() { allCirculars.forEach(c=>c.seen=true); updateBadges(); renderAlertsPage(); showNotif('All circulars marked as seen'); }
+function goToCircular(id) { showPage('dashboard',document.querySelector('.nav-item')); setTimeout(()=>selectCircular(id),100); }
+
+// ── Actions page ───────────────────────────────────────────────────────────────
+function renderActionsPage() {
+  const filter=document.getElementById('action-filter')?.value||'all';
+  const all=allCirculars.flatMap(c=>(c.checklist||[]).map(item=>({...item,cid:c.id,ctitle:c.title,reg:c.regulator})));
+  const urgent=all.filter(i=>i.deadline==='urgent'&&!i.done).length;
+  const pending=all.filter(i=>!i.done).length;
+  const done=all.filter(i=>i.done).length;
+  document.getElementById('act-urgent').textContent=urgent;
+  document.getElementById('act-pending').textContent=pending;
+  document.getElementById('act-done-count').textContent=done;
+  let filtered=all;
+  if(filter==='urgent') filtered=all.filter(i=>i.deadline==='urgent'&&!i.done);
+  else if(filter==='pending') filtered=all.filter(i=>!i.done);
+  else if(filter==='done') filtered=all.filter(i=>i.done);
+  const con=document.getElementById('actions-list');
+  if(!filtered.length){con.innerHTML='<div class="empty-state"><i class="ti ti-checks"></i>'+(filter==='done'?'No completed items yet':'All caught up!')+'</div>';return;}
+  const groups={urgent:filtered.filter(i=>i.deadline==='urgent'&&!i.done),soon:filtered.filter(i=>i.deadline==='soon'&&!i.done),ok:filtered.filter(i=>i.deadline==='ok'&&!i.done),done:filtered.filter(i=>i.done)};
+  let html='';
+  if(groups.urgent.length) html+=actGroup('🔴 Urgent — Within 7 Days',groups.urgent,'chip-urgent');
+  if(groups.soon.length) html+=actGroup('🟡 This Month — Within 30 Days',groups.soon,'chip-soon');
+  if(groups.ok.length) html+=actGroup('🟢 Standard — Within 90 Days',groups.ok,'chip-ok');
+  if(groups.done.length) html+=actGroup('✅ Completed',groups.done,'');
+  con.innerHTML=html;
+}
+
+function actGroup(title,items,chip) {
+  return `<div class="action-section-hdr">${title} <span style="font-weight:400;color:var(--text3)">(${items.length})</span></div>`+
+    items.map(item=>{
+      const c=allCirculars.find(x=>x.id===item.cid);
+      const idx=c?.checklist?.findIndex(ci=>ci.action===item.action)??0;
+      return `<div class="action-item-full">
+        <div class="check-box ${item.done?'checked':''}" onclick="toggleCheck('${item.cid}',${idx},this)"></div>
+        <div style="flex:1;min-width:0">
+          <div class="aif-text" id="ci-${item.cid}-${idx}" style="${item.done?'text-decoration:line-through;color:var(--text3)':''}">${item.action}</div>
+          <div class="aif-sub"><span class="badge badge-${(item.reg||'').toLowerCase()}">${item.reg}</span><span>${item.dept}</span><span style="color:var(--text3)">·</span><span style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(item.ctitle||'').substring(0,45)}…</span></div>
+        </div>
+        ${chip?`<span class="dl-chip ${chip}">${item.deadline==='urgent'?'Urgent':item.deadline==='soon'?'30 days':'90 days'}</span>`:'<span style="font-size:11px;color:var(--text3)">Done</span>'}
+      </div>`;
+    }).join('');
+}
+
+// ── Reports page ───────────────────────────────────────────────────────────────
+function renderReports() {
+  const total=allCirculars.length; if(!total) return;
+  const byR=grp(allCirculars,'regulator');
+  const byS=grp(allCirculars,'severity');
+  const allActs=allCirculars.flatMap(c=>c.checklist||[]);
+  const regs=['RBI','SEBI','IRDAI','FIU'];
+  const colors={RBI:'#bf5900',SEBI:'#1a3a6b',IRDAI:'#1a7a4a',FIU:'#6b1a6b'};
+  const maxV=Math.max(...regs.map(r=>(byR[r]||[]).length),1);
+  document.getElementById('bar-chart').innerHTML=regs.map(r=>{
+    const cnt=(byR[r]||[]).length; const pct=Math.round(cnt/maxV*100);
+    return `<div class="bar-group"><div class="bar" style="height:${pct}%;background:${colors[r]};opacity:0.85" title="${r}: ${cnt}"></div><div class="bar-lbl">${r}<br><strong>${cnt}</strong></div></div>`;
+  }).join('');
+  const sevData=[{l:'Critical',c:(byS.critical||[]).length,col:'#c0392b'},{l:'High',c:(byS.high||[]).length,col:'#b85c00'},{l:'Medium',c:(byS.medium||[]).length,col:'#3B6FCA'},{l:'Low',c:(byS.low||[]).length,col:'#aaa'}].filter(d=>d.c>0);
+  const svgEl=document.getElementById('donut-svg');
+  const legEl=document.getElementById('donut-legend');
+  let off=0; const r=38; const circ=2*Math.PI*r;
+  const paths=sevData.map(d=>{const pct=d.c/total;const dash=pct*circ;const gap=circ-dash;const p=`<circle cx="50" cy="50" r="${r}" fill="none" stroke="${d.col}" stroke-width="16" stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${-off}" transform="rotate(-90 50 50)"/>`;off+=dash;return p;}).join('');
+  svgEl.innerHTML=`<circle cx="50" cy="50" r="38" fill="none" stroke="#f0f0f0" stroke-width="16"/>${paths}<text x="50" y="54" text-anchor="middle" font-size="13" font-weight="700" fill="#1a1a2e">${total}</text>`;
+  legEl.innerHTML=sevData.map(d=>`<div class="legend-item"><div class="legend-dot" style="background:${d.col}"></div><span>${d.l}: <strong>${d.c}</strong></span></div>`).join('');
+  document.getElementById('metrics-grid').innerHTML=[{v:total,l:'Total Circulars'},{v:(byS.critical||[]).length,l:'Critical Alerts'},{v:allActs.length,l:'Action Items'},{v:allActs.filter(i=>i.done).length,l:'Completed'}].map(m=>`<div class="metric-item"><div class="metric-val">${m.v}</div><div class="metric-lbl">${m.l}</div></div>`).join('');
+  document.getElementById('reg-table').innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="border-bottom:2px solid var(--border)">${['Regulator','Total','Critical','High','Actions'].map(h=>`<th style="padding:8px 16px;text-align:left;font-size:10.5px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">${h}</th>`).join('')}</tr></thead><tbody>${regs.map(r=>{const items=byR[r]||[];const acts=allCirculars.filter(c=>c.regulator===r).flatMap(c=>c.checklist||[]).length;return `<tr style="border-bottom:1px solid var(--border)"><td style="padding:10px 16px"><span class="badge badge-${r.toLowerCase()}">${r}</span></td><td style="padding:10px 16px;font-weight:600">${items.length}</td><td style="padding:10px 16px;color:var(--danger)">${items.filter(c=>c.severity==='critical').length}</td><td style="padding:10px 16px;color:var(--warn)">${items.filter(c=>c.severity==='high').length}</td><td style="padding:10px 16px;color:var(--text3)">${acts}</td></tr>`;}).join('')}</tbody></table>`;
+}
+
+// ── Timeline ───────────────────────────────────────────────────────────────────
+function renderTimeline() {
+  const sevCol={critical:'var(--danger)',high:'var(--warn)',medium:'var(--brand-mid)',low:'#bbb'};
+  document.getElementById('timeline').innerHTML=[...allCirculars].slice(0,5).map(c=>`<div class="tl-item"><div class="tl-time">${fmtDate(c.scrapedAt||c.date)}</div><div class="tl-dot" style="background:${sevCol[c.severity]||'#bbb'}"></div><div>${c.regulator}: ${c.title.substring(0,50)}${c.title.length>50?'…':''}</div></div>`).join('')||'<div class="tl-item"><div style="color:var(--text3)">No activity yet</div></div>';
+}
+
+// ── Scan ───────────────────────────────────────────────────────────────────────
+async function triggerScan() {
+  const btn=document.getElementById('scan-btn');
+  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader spinning"></i> Scanning…';
+  try {
+    if(demoMode){await sleep(2000);showNotif('✓ Scan complete — demo mode, no new circulars');}
+    else {
+      const {newCount,message}=await apiFetch('/api/scan',{method:'POST'});
+      showNotif('✓ '+message);
+      if(newCount>0){const {data}=await apiFetch('/api/circulars?limit=50');allCirculars=data;updateAll();}
+    }
+  } catch { showNotif('Scan failed — check backend'); }
+  finally { btn.disabled=false; btn.innerHTML='<i class="ti ti-refresh"></i> Scan Now'; }
+}
+
+async function silentRefresh() {
+  if(demoMode) return;
+  try {
+    const prev=allCirculars.length;
+    const {data}=await apiFetch('/api/circulars?limit=50');
+    allCirculars=data;
+    if(data.length>prev){showNotif(`🔔 ${data.length-prev} new circular(s) detected`);updateAll();}
+  } catch {}
+}
+
+// ── Export ─────────────────────────────────────────────────────────────────────
+function exportCSV() {
+  const rows=allCirculars.map(c=>`"${c.title}","${c.regulator}","${c.severity}","${c.date||''}","${(c.summary||'').replace(/"/g,"'")}"`);
+  const blob=new Blob(['Title,Regulator,Severity,Date,Summary\n'+rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`finguard-${new Date().toISOString().split('T')[0]}.csv`; a.click();
+  showNotif('✓ Report exported as CSV');
+}
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+function showPage(id,el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  const titles={dashboard:'Dashboard',alerts:'Alerts',actions:'Action Items',reports:'Reports & Analytics',settings:'Settings'};
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+  if(id==='alerts') renderAlertsPage();
+  if(id==='actions') renderActionsPage();
+  if(id==='reports') renderReports();
+  if(id==='settings') renderTeamMembers();
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────────
+function toggleSetting(el) { el.classList.toggle('on'); el.classList.toggle('off'); showNotif('Setting updated'); }
+
+function renderTeamMembers() {
+  const el = document.getElementById('team-members-list');
+  if (!el) return;
+  el.innerHTML = USERS.filter(u => u.email !== 'demo@finguard.in').map((u,i) => `
+    <div class="team-row" style="${i===0?'border-radius:10px 10px 0 0':''}">
+      <div class="member-avatar" style="background:${u.color}">${u.avatar}</div>
+      <div style="flex:1">
+        <div style="font-size:12.5px;font-weight:500;color:var(--text)">${u.name} ${currentUser?.email===u.email?'<span style="font-size:10px;color:var(--brand-mid)">(you)</span>':''}</div>
+        <div style="font-size:11px;color:var(--text3)">${u.bank} · ${u.role}</div>
+      </div>
+      <span class="badge ${u.role==='Super Admin'?'badge-medium':'badge-low'}">${u.role==='Super Admin'?'Admin':'Member'}</span>
+    </div>`).join('');
+}
+
+// ── Status ─────────────────────────────────────────────────────────────────────
+function setStatus(s) {
+  const p=document.getElementById('pulse'); const t=document.getElementById('status-text'); const sub=document.getElementById('topbar-sub');
+  if(s==='live'){p.style.background='#2ecc71';t.textContent='Live';t.style.color='var(--success)';sub.textContent='Connected · Auto-scan every 15 min';}
+  else if(s==='demo'){p.style.background='#aaa';t.textContent='Demo Mode';t.style.color='var(--text3)';sub.textContent='Showing sample data — connect backend for live data';}
+  else{p.style.background='#aaa';t.textContent='Connecting';t.style.color='var(--text3)';}
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function typeText(el,text,cb){let i=0;el.innerHTML='';const iv=setInterval(()=>{if(i<text.length){el.innerHTML=text.substring(0,i+1)+'<span class="typing-cursor"></span>';i+=4;}else{el.innerHTML=text;clearInterval(iv);if(cb)cb();}},14);}
+function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
+function fmtDate(d){if(!d)return'—';try{const dt=new Date(d);const diff=Math.floor((Date.now()-dt)/1000);if(diff<60)return'Just now';if(diff<3600)return Math.floor(diff/60)+'m ago';if(diff<86400)return Math.floor(diff/3600)+'h ago';if(diff<172800)return'Yesterday';return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'});}catch{return d;}}
+function grp(arr,key){return arr.reduce((a,x)=>{const k=x[key]||'?';a[k]=(a[k]||[]);a[k].push(x);return a;},{});}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function showNotif(msg){const el=document.getElementById('notif-banner');document.getElementById('notif-text').textContent=msg;el.style.display='flex';clearTimeout(window._nt);window._nt=setTimeout(()=>el.style.display='none',5000);}
+function showError(msg){document.getElementById('error-text').textContent=msg;document.getElementById('error-banner').style.display='flex';}
+</script>
+</body>
+</html>

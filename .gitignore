@@ -1,0 +1,20 @@
+# Environment variables — NEVER commit this
+.env
+
+# Database file — contains real data
+data.json
+
+# Node modules — too large, auto-installed
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/

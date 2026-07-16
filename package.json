@@ -1,0 +1,33 @@
+{
+  "name": "finguard",
+  "version": "1.0.0",
+  "description": "AI-powered regulatory compliance monitor for Indian banks — monitors RBI, SEBI, IRDAI, FIU-IND in real time",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test-scrapers.js"
+  },
+  "keywords": [
+    "compliance",
+    "rbi",
+    "sebi",
+    "fintech",
+    "india",
+    "ai",
+    "nodejs",
+    "express"
+  ],
+  "author": "Neel",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0",
+    "node-cron": "^3.0.0",
+    "rss-parser": "^3.13.0",
+    "xml2js": "^0.6.0"
+  }
+}
